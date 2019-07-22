@@ -1,0 +1,17 @@
+.jumbotron {
+    background-image: url("../images/train.jpg");
+    background-size: cover;
+}
+
+h1 {
+    color: white;
+    text-align: right;
+}
+
+.card-header {
+    background: lightblue;
+}
+
+.row {
+    margin-top: 1em;
+}
