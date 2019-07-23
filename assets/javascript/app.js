@@ -5,6 +5,12 @@ $(document).ready(function() {
 
   var trainSchedule = [];
 
+  var trainToRemoveIndex = -1;
+
+  var min_time = '';
+
+  var max_time = '';
+
   function Train(index, name, frequency) {
     (this.index = index),
       (this.name = name),
@@ -33,7 +39,7 @@ $(document).ready(function() {
   // collect data
   var trainName, trainDestination, firstTrainTime, trainFrequency, minutesAway;
 
-  $("button").click(function(e) {
+  $("#addTrain").click(function(e) {
     e.preventDefault();
 
     trainName = $("#train-name")
@@ -73,6 +79,12 @@ $(document).ready(function() {
       $("#first-train-time").val("");
       return;
     }
+    // check for min and max values
+    if (!validTimeRange(firstTrainTime)) {
+      alert("Enter a VALID Train Time Please (between " + min_time + " and " + max_time + ")!");
+      $("#first-train-time").val("");
+      return;
+    }
 
     trainFrequency = parseInt(
       $("#train-frequency")
@@ -106,7 +118,7 @@ $(document).ready(function() {
     }
 
     //
-    database.ref().set({
+    database.ref().update({
       trains: trains
     });
 
@@ -115,12 +127,37 @@ $(document).ready(function() {
     $("#train-frequency").val(15);
   });
 
-  database.ref().on("value", function(snapshot) {
+  $("#removeTrain").click(function(e) {
+    e.preventDefault();
+    if (trainToRemoveIndex >= 0) {
+      trains.splice(trainToRemoveIndex, 1);
+      database.ref().update({
+        trains: trains
+      });
+    }
+  });
+
+  // database status updates
+  database.ref().on('value', function(snapshot) {
     if (!snapshot.val()) {
       trains.length = 0;
       cleanUp();
     } else {
-      trains = snapshot.val().trains;
+      if (snapshot.val().trains) {
+        trains = snapshot.val().trains;
+      }
+      if (snapshot.val().min_time) {
+        if (snapshot.val().min_time !== min_time) {
+          min_time = snapshot.val().min_time;
+          console.log(min_time);  
+        }
+      }
+      if (snapshot.val().max_time) {
+        if (snapshot.val().max_time !== max_time) {
+          max_time = snapshot.val().max_time;
+          console.log(max_time);
+        }
+      }
     }
     var train;
     $("tbody").empty();
@@ -151,6 +188,16 @@ $(document).ready(function() {
       td.html(getMinutesAway(trains[i].trainTime));
       tr.append(td);
 
+      td = $("<td>");
+      td.attr("id", "td-remove-" + i);
+      var id = "trash-" + i;
+      td.html(
+        '<i class="fa fa-trash" id="' +
+          id +
+          '" aria-hidden="true" style="cursor: pointer;" data-toggle="modal" data-target="#areYouSureModalCenter"></i>'
+      );
+      tr.append(td);
+
       $("tbody").append(tr);
 
       if (!trainScheduleExists(trains[i].name)) {
@@ -165,6 +212,16 @@ $(document).ready(function() {
     }
   });
 
+  $(document).on("click", ".fa-trash", function(event) {
+    event.preventDefault();
+    trainToRemoveIndex = parseInt(
+      $(this)
+        .attr("id")
+        .split("-")[1]
+    );
+    console.log("remove " + trains[trainToRemoveIndex].name);
+  });
+
   function cleanUp() {
     for (var i = 0; i < trainSchedule.length; i++) {
       clearInterval(trainSchedule[i].interval);
@@ -173,9 +230,9 @@ $(document).ready(function() {
     trainSchedule.length = 0;
   }
 
-  function getMinutesAway(firstTime) {
-    var hour1 = parseInt(firstTime.split(":")[0]);
-    var minute1 = parseInt(firstTime.split(":")[1]);
+  function getMinutesAway(trainTime) {
+    var hour1 = parseInt(trainTime.split(":")[0]);
+    var minute1 = parseInt(trainTime.split(":")[1]);
     var toMilliSeconds1 = hour1 * 3600000 + minute1 * 60000;
 
     var now = moment();
@@ -186,11 +243,12 @@ $(document).ready(function() {
     var hour2 = parseInt(the_time.format("HH:mm").split(":")[0]);
     var minute2 = parseInt(the_time.format("HH:mm").split(":")[1]);
     var toMilliSeconds2 = hour2 * 3600000 + minute2 * 60000;
-
-    if (hour2 === hour1 && minute2 === minute1) {
-        return 0;
+    console.log('*********************');
+    
+    if (toMilliSeconds1 === toMilliSeconds2) {
+      return 0;
     }
-
+    
     // is this hour > train hour?
     if (hour2 > hour1) {
       var hour_diff = 24 - (hour2 - hour1);
@@ -204,7 +262,7 @@ $(document).ready(function() {
       var t = moment(hour_diff + ":" + min_dif, "HH:mm");
 
       return (hour_diff * 3600000 + min_dif * 60000) / 60000;
-    } else {
+    } else if (hour2 < hour1) {
       var hour_diff = hour1 - hour2;
       var min_diff;
       if (minute2 > minute1) {
@@ -216,9 +274,37 @@ $(document).ready(function() {
       var t = moment(hour_diff + ":" + min_dif, "HH:mm");
 
       return (hour_diff * 3600000 + min_dif * 60000) / 60000;
+    } else {
+      // equal hours, but different moinutes
+      var hour_diff = hour1 - hour2;
+      var min_diff;
+      if (minute2 > minute1) {
+        min_dif = 60 - (minute2 - minute1);        
+      } else {
+        min_dif = minute1 - minute2;
+      }
+      var t = moment(hour_diff + ":" + min_dif, "HH:mm");
+
+      return (hour_diff * 3600000 + min_dif * 60000) / 60000;
     }
 
     return 0;
+  }
+
+  function validTimeRange(firstTrainTime) {
+    var hours = parseInt(firstTrainTime.split(":")[0]);
+    var minutes = parseInt(firstTrainTime.split(":")[1]);
+    var toMilliSeconds1 = hours * 3600000 + minutes * 60000;    
+
+    var min_time_hours = parseInt(min_time.split(":")[0]);
+    var min_time_minutes = parseInt(min_time.split(":")[1]);
+    var toMilliSeconds2 = min_time_hours * 3600000 + min_time_minutes * 60000;
+    
+    var max_time_hours = parseInt(max_time.split(":")[0]);
+    var max_time_minutes = parseInt(max_time.split(":")[1]);
+    var toMilliSeconds3 = max_time_hours * 3600000 + max_time_minutes * 60000;
+
+    return toMilliSeconds1 >= toMilliSeconds2 && toMilliSeconds1 <= toMilliSeconds3;
   }
 
   function trainExists(name) {
