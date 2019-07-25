@@ -1,4 +1,17 @@
 $(document).ready(function() {
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyAPbo_BOaLlqYUpCMzcIMApgfKz4u34xrI",
+    authDomain: "train-scheduler-dbbca.firebaseapp.com",
+    databaseURL: "https://train-scheduler-dbbca.firebaseio.com",
+    projectId: "train-scheduler-dbbca",
+    storageBucket: "",
+    messagingSenderId: "746730831692",
+    appId: "1:746730831692:web:4379faf6d3475e77"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+
   var database = firebase.database();
 
   var trains = [];
@@ -7,9 +20,9 @@ $(document).ready(function() {
 
   var trainToRemoveIndex = -1;
 
-  var min_time = '';
+  var min_time = "";
 
-  var max_time = '';
+  var max_time = "";
 
   function Train(index, name, frequency) {
     (this.index = index),
@@ -81,7 +94,13 @@ $(document).ready(function() {
     }
     // check for min and max values
     if (!validTimeRange(firstTrainTime)) {
-      alert("Enter a VALID Train Time Please (between " + min_time + " and " + max_time + ")!");
+      alert(
+        "Enter a VALID Train Time Please (between " +
+          min_time +
+          " and " +
+          max_time +
+          ")!"
+      );
       $("#first-train-time").val("");
       return;
     }
@@ -138,7 +157,7 @@ $(document).ready(function() {
   });
 
   // database status updates
-  database.ref().on('value', function(snapshot) {
+  database.ref().on("value", function(snapshot) {
     if (!snapshot.val()) {
       trains.length = 0;
       cleanUp();
@@ -149,7 +168,7 @@ $(document).ready(function() {
       if (snapshot.val().min_time) {
         if (snapshot.val().min_time !== min_time) {
           min_time = snapshot.val().min_time;
-          console.log(min_time);  
+          console.log(min_time);
         }
       }
       if (snapshot.val().max_time) {
@@ -231,6 +250,7 @@ $(document).ready(function() {
   }
 
   function getMinutesAway(trainTime) {
+    
     var hour1 = parseInt(trainTime.split(":")[0]);
     var minute1 = parseInt(trainTime.split(":")[1]);
     var toMilliSeconds1 = hour1 * 3600000 + minute1 * 60000;
@@ -240,15 +260,16 @@ $(document).ready(function() {
       now._d.getHours() + ":" + now._d.getMinutes(),
       "HH:mm"
     );
+
     var hour2 = parseInt(the_time.format("HH:mm").split(":")[0]);
     var minute2 = parseInt(the_time.format("HH:mm").split(":")[1]);
     var toMilliSeconds2 = hour2 * 3600000 + minute2 * 60000;
-    console.log('*********************');
-    
+    console.log("*********************");
+
     if (toMilliSeconds1 === toMilliSeconds2) {
       return 0;
     }
-    
+
     // is this hour > train hour?
     if (hour2 > hour1) {
       var hour_diff = 24 - (hour2 - hour1);
@@ -275,11 +296,12 @@ $(document).ready(function() {
 
       return (hour_diff * 3600000 + min_dif * 60000) / 60000;
     } else {
-      // equal hours, but different moinutes
+      // equal hours, but different minutes
       var hour_diff = hour1 - hour2;
       var min_diff;
       if (minute2 > minute1) {
-        min_dif = 60 - (minute2 - minute1);        
+        hour_diff = 24;
+        min_diff = minute2 - minute1;
       } else {
         min_dif = minute1 - minute2;
       }
@@ -289,22 +311,25 @@ $(document).ready(function() {
     }
 
     return 0;
+
   }
 
   function validTimeRange(firstTrainTime) {
     var hours = parseInt(firstTrainTime.split(":")[0]);
     var minutes = parseInt(firstTrainTime.split(":")[1]);
-    var toMilliSeconds1 = hours * 3600000 + minutes * 60000;    
+    var toMilliSeconds1 = hours * 3600000 + minutes * 60000;
 
     var min_time_hours = parseInt(min_time.split(":")[0]);
     var min_time_minutes = parseInt(min_time.split(":")[1]);
     var toMilliSeconds2 = min_time_hours * 3600000 + min_time_minutes * 60000;
-    
+
     var max_time_hours = parseInt(max_time.split(":")[0]);
     var max_time_minutes = parseInt(max_time.split(":")[1]);
     var toMilliSeconds3 = max_time_hours * 3600000 + max_time_minutes * 60000;
 
-    return toMilliSeconds1 >= toMilliSeconds2 && toMilliSeconds1 <= toMilliSeconds3;
+    return (
+      toMilliSeconds1 >= toMilliSeconds2 && toMilliSeconds1 <= toMilliSeconds3
+    );
   }
 
   function trainExists(name) {
