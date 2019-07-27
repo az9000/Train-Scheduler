@@ -118,7 +118,7 @@ $(document).ready(function() {
     var hour = parseInt(firstTrainTime.split(":")[0]);
     var minute = parseInt(firstTrainTime.split(":")[1]);
     var the_time = moment(hour + ":" + minute, "HH:mm");
-    console.log(the_time.format("HH:mm"));
+    
 
     minutesAway = getMinutesAway(firstTrainTime);
 
@@ -133,7 +133,7 @@ $(document).ready(function() {
     if (!trainScheduleExists(trainName)) {
       train = new Train(trainSchedule.length, trainName, trainFrequency * 1000);
       trainSchedule.push(train);
-      console.log(trainSchedule);
+      
     }
 
     //
@@ -168,13 +168,13 @@ $(document).ready(function() {
       if (snapshot.val().min_time) {
         if (snapshot.val().min_time !== min_time) {
           min_time = snapshot.val().min_time;
-          console.log(min_time);
+          
         }
       }
       if (snapshot.val().max_time) {
         if (snapshot.val().max_time !== max_time) {
           max_time = snapshot.val().max_time;
-          console.log(max_time);
+          
         }
       }
     }
@@ -226,7 +226,7 @@ $(document).ready(function() {
           trains[i].frequency * 1000
         );
         trainSchedule.push(train);
-        console.log(trainSchedule);
+        
       }
     }
   });
@@ -250,7 +250,6 @@ $(document).ready(function() {
   }
 
   function getMinutesAway(trainTime) {
-    
     var hour1 = parseInt(trainTime.split(":")[0]);
     var minute1 = parseInt(trainTime.split(":")[1]);
     var toMilliSeconds1 = hour1 * 3600000 + minute1 * 60000;
@@ -264,7 +263,7 @@ $(document).ready(function() {
     var hour2 = parseInt(the_time.format("HH:mm").split(":")[0]);
     var minute2 = parseInt(the_time.format("HH:mm").split(":")[1]);
     var toMilliSeconds2 = hour2 * 3600000 + minute2 * 60000;
-    console.log("*********************");
+    
 
     if (toMilliSeconds1 === toMilliSeconds2) {
       return 0;
@@ -311,7 +310,6 @@ $(document).ready(function() {
     }
 
     return 0;
-
   }
 
   function validTimeRange(firstTrainTime) {
@@ -351,4 +349,5 @@ $(document).ready(function() {
 
     return false;
   }
+
 });
