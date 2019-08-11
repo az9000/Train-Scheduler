@@ -1,5 +1,8 @@
 # Train-Scheduler
 
+# Demo
+https://az9000.github.io/Train-Scheduler/
+
 # Description
 A train scheduling app where Firebase Relatime database is utilized to store train arrival/departure times. The JavaScript library is included in the code but is only used here for adding 15 minutes to the next train arrival time. I was not able to figure out how to use the library to calculate the number of minutes remaining until the train arrives. The "diff" function did not produce the correct number of minutes (according to moment.js, there are 504 minutes between 5pm and 9am! Sure! On Fantasy Island maybe!)
 
